@@ -4,6 +4,8 @@ from flask_socketio import SocketIO
 
 socketio = SocketIO()
 
+from . import app_data
+
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
@@ -20,7 +22,3 @@ def create_app(test_config=None):
     socketio.init_app(app, async_mode='threading')
 
     return app
-
-if __name__ == '__main__':
-    app = create_app()
-    socketio.run(app)
