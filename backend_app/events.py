@@ -1,4 +1,5 @@
 import json
+import uuid
 
 # Flask
 from flask import session
@@ -50,6 +51,14 @@ def send_coordinate_data():
         except:
             pass
 
+def is_valid_uuid(uuid_str):
+    try:
+        uuid.UUID(uuid_str)
+        return True
+    except ValueError:
+        return False
+
+
 @socketio.on('connect')
 def connect(auth):
     print('connect')
@@ -60,10 +69,23 @@ def connect(auth):
     #socketio.start_background_task(send_coordinate_data)
     # Get the topics name from the map
     topics = consumer.list_topics()
+    topics_list = []
+    for topic in topics.topics.keys():
+        if is_valid_uuid(topic):
+            topics_list.append({'unit': topic})
+    data = {
+        'status': 200,
+        'code': 'available units',
+        'units': topics_list
+    }
+    json_str = json.dumps(data)
+    emit('units', {'data': json_str})
+
 
 @socketio.on('message')
 def message(auth):
     print('message event')
+
 
 @socketio.on('disconnect')
 def disconnect():

@@ -1,5 +1,6 @@
 import uuid
 import random
+import time
 
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
@@ -41,11 +42,13 @@ def create_topics_produce_data():
 # Crear una clase para almacenar topics
 
 def test_connect_event(socketio_client):
-    create_topics_produce_data()
-    # Clear any previous data
-    socketio_client.get_received()
+    #create_topics_produce_data()
 
     # Connect event
-    socketio_client.connect()
-    data = socketio_client.get_received()
-    print(data)
+    #socketio_client.connect()
+    resp = socketio_client.get_received()
+    data = resp[0]['args'][0]['data']
+    assert 'status' in data
+    assert 'code' in data
+    assert 'available units' in data
+    assert 'units' in data
