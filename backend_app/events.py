@@ -13,7 +13,7 @@ from confluent_kafka.schema_registry.json_schema import JSONDeserializer
 from .schemas_objects import GPSData, dict_to_gpsdata
 from .schema import gps_data_schema_str
 from .config import config
-
+from .utils import is_valid_uuid
 
 from . import socketio
 
@@ -51,17 +51,8 @@ def send_coordinate_data():
         except:
             pass
 
-def is_valid_uuid(uuid_str):
-    try:
-        uuid.UUID(uuid_str)
-        return True
-    except ValueError:
-        return False
-
-
 @socketio.on('connect')
 def connect(auth):
-    print('connect')
     # Connect to kafka but don't subscribe to any topic
     set_consumer_config()
     global consumer
