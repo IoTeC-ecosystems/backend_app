@@ -4,6 +4,8 @@ from flask_socketio import SocketIO
 
 socketio = SocketIO()
 
+from . import events
+
 def create_app(test_config=None):
     app = Flask(__name__)
 

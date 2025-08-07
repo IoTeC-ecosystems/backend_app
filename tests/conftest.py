@@ -9,8 +9,11 @@ def app():
         'TESTING': True,
     })
 
-    yield app
+    with app.app_context():
+        yield app, socketio
 
 @pytest.fixture
-def client(app):
-    return socketio.test_client(app)
+def socketio_client(app):
+    app, socketio = app
+    client = socketio.test_client(app)
+    return client
