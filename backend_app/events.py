@@ -31,9 +31,15 @@ def send_coordinate_data():
     global consumer
     json_deserializer = JSONDeserializer(gps_data_schema_str, from_dict=dict_to_gpsdata)
 
+    # Getting data from kafka
     while True:
+        # Number of topics might change with time
+        topics = consumer.list_topics()
+        topics_list = [topic for topic in topics.topics.keys() if is_valid_uuid(topic)]
+        num_topics = len(topics_list)
         try:
-            messages = consumer.consume()
+            # Try to get one message per topic
+            messages = consumer.consume(num_messages=num_topics)
             if len(messages) == 0:
                 continue
             messages_list = []
@@ -51,13 +57,13 @@ def send_coordinate_data():
         except:
             pass
 
+
 @socketio.on('connect')
 def connect(auth):
     # Connect to kafka but don't subscribe to any topic
     set_consumer_config()
     global consumer
     consumer = Consumer(config)
-    #socketio.start_background_task(send_coordinate_data)
     # Get the topics name from the map
     topics = consumer.list_topics()
     topics_list = []
@@ -70,7 +76,11 @@ def connect(auth):
         'units': topics_list
     }
     json_str = json.dumps(data)
+    # Send to client
     emit('units', {'data': json_str})
+
+    # Start background task for gps data
+    socketio.start_background_task(send_coordinate_data)
 
 
 @socketio.on('message')

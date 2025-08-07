@@ -61,13 +61,20 @@ def delete_test_topics():
 def test_connect_event(socketio_client):
     create_topics_produce_data()
 
-    # Connect event
-    #socketio_client.connect()
+    # Get data from connect event
     resp = socketio_client.get_received()
     data = resp[0]['args'][0]['data']
     assert 'status' in data
     assert 'code' in data
     assert 'available units' in data
     assert 'units' in data
+
+    resp = socketio_client.get_received()
+    time.sleep(1)
+    data = resp[0]['args'][0]['data']
+    assert 'status' in data
+    assert 'code' in data
+    assert 'new data' in data
+    assert 'unit' in data
 
     delete_test_topics()
