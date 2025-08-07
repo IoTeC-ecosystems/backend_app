@@ -11,6 +11,7 @@ from confluent_kafka.schema_registry.json_schema import JSONSerializer
 from backend_app.config import config, sr_config
 from backend_app.schemas_objects import GPSData, gpsdata_to_dict
 from backend_app.schema import gps_data_schema_str
+from backend_app.utils import is_valid_uuid
 
 def create_topics_produce_data():
     admin = AdminClient(config)
@@ -39,10 +40,26 @@ def create_topics_produce_data():
                              value=json_serializer(d, SerializationContext(unit, MessageField.VALUE)))
         producer.flush()
 
-# Crear una clase para almacenar topics
+
+def delete_test_topics():
+    admin = AdminClient(config)
+    topics = admin.list_topics()
+
+    to_be_deleted = []
+    for topic in topics.topics.keys():
+        if is_valid_uuid(topic):
+            to_be_deleted.append(topic)
+
+    fs = admin.delete_topics(to_be_deleted)
+    # Wait for operation to finish
+    for topic, f in fs.items():
+        try:
+            f.result()
+        except:
+            pass
 
 def test_connect_event(socketio_client):
-    #create_topics_produce_data()
+    create_topics_produce_data()
 
     # Connect event
     #socketio_client.connect()
@@ -52,3 +69,5 @@ def test_connect_event(socketio_client):
     assert 'code' in data
     assert 'available units' in data
     assert 'units' in data
+
+    delete_test_topics()
