@@ -127,12 +127,8 @@ def subscribe(_json):
         pass
 
 
-@socketio.on('message')
-def message(auth):
-    print('message event')
-
-
 @socketio.on('disconnect')
 def disconnect():
     global consumer
-    print('disconnecting')
+    # Close connection to kafka
+    consumer.close()
