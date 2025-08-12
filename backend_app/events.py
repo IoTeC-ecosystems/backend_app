@@ -6,11 +6,11 @@ from flask import session
 from flask_socketio import emit, send
 
 # Kafka
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaException
 from confluent_kafka.serialization import SerializationContext, MessageField
 from confluent_kafka.schema_registry.json_schema import JSONDeserializer
 
-from .schemas_objects import GPSData, dict_to_gpsdata
+from .schemas_objects import GPSData, dict_to_gpsdata, gpsdata_to_dict
 from .schema import gps_data_schema_str
 from .config import config
 from .utils import is_valid_uuid
@@ -39,22 +39,22 @@ def send_coordinate_data():
         num_topics = len(topics_list)
         try:
             # Try to get one message per topic
-            messages = consumer.consume(num_messages=num_topics)
-            if len(messages) == 0:
+            events = consumer.consume(num_messages=num_topics, timeout=1)
+            if len(events) == 0:
                 continue
             messages_list = []
-            for msg in messages:
-                data = json_deserializer(msg.value(), SerializationContext(topic, MessageField.VALUE))
-                if data is not None:
-                    messages_list.append(data)
+            for evt in events:
+                data = json_deserializer(evt.value(), SerializationContext(evt.topic(), MessageField.VALUE))
+            if data is not None:
+                messages_list.append(gpsdata_to_dict(data, None))
             data = {
                 'status': 200,
                 'code': 'new data',
                 'units': messages_list
             }
             json_str = json.dumps(data)
-            emit('gps data', json_str)
-        except:
+            socketio.emit('gps data', json_str)
+        except Exception as e:
             pass
 
 
@@ -80,7 +80,51 @@ def connect(auth):
     emit('units', {'data': json_str})
 
     # Start background task for gps data
-    socketio.start_background_task(send_coordinate_data)
+    socketio.start_background_task(target=send_coordinate_data)
+
+
+@socketio.on('subscribe')
+def subscribe(_json):
+    global consumer
+    # Get the list of topics to subscribe
+    data = json.loads(_json)
+    if len(data['units']) == 0:
+        err_obj = {
+            'status': 400,
+            'code': 'empty list of units'
+        }
+        json_str = json.dumps(err_obj)
+        emit('error', json_str)
+
+    # Validate topics
+    topics_list = consumer.list_topics()
+    topics = set()
+    for topic in topics_list.topics.keys():
+        topics.add(topic)
+    invalid_topics = []
+    valid_topics = []
+    for unit in data['units']:
+        if unit not in topics:
+            invalid_topics.append(unit)
+        else:
+            valid_topics.append(unit)
+    if len(invalid_topics) > 0:
+        err_obj = {
+            'status': 400,
+            'code': 'non existing units',
+            'units': invalid_topics
+        }
+        emit('error', json.dumps(err_obj))
+    try:
+        consumer.subscribe(valid_topics)
+        err_obj = {
+            'status': 200,
+            'code': 'subscribed'
+        }
+        emit('error', json.dumps(err_obj))
+    except KafkaException:
+        # Handle case
+        pass
 
 
 @socketio.on('message')
