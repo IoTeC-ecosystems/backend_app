@@ -45,8 +45,8 @@ def send_coordinate_data():
             messages_list = []
             for evt in events:
                 data = json_deserializer(evt.value(), SerializationContext(evt.topic(), MessageField.VALUE))
-            if data is not None:
-                messages_list.append(gpsdata_to_dict(data, None))
+                if data is not None:
+                    messages_list.append(gpsdata_to_dict(data, None))
             data = {
                 'status': 200,
                 'code': 'new data',
