@@ -1,5 +1,6 @@
 import json
 import uuid
+from threading import Event, Lock
 
 # Flask
 from flask import session
@@ -18,13 +19,16 @@ from .utils import is_valid_uuid
 from . import socketio
 
 consumer = None
+thread = None
+thread_stop_event = Event()
+thread_lock = Lock()
 
 def set_consumer_config():
     config['group.id'] = 'gps_group'
     config['auto.offset.reset'] = 'earliest'
 
 
-def send_coordinate_data():
+def send_coordinate_data(event):
     """
     Will continously send data to the client in the background
     """
@@ -32,7 +36,7 @@ def send_coordinate_data():
     json_deserializer = JSONDeserializer(gps_data_schema_str, from_dict=dict_to_gpsdata)
 
     # Getting data from kafka
-    while True:
+    while event.is_set():
         # Number of topics might change with time
         topics = consumer.list_topics()
         topics_list = [topic for topic in topics.topics.keys() if is_valid_uuid(topic)]
@@ -63,6 +67,8 @@ def connect(auth):
     # Connect to kafka but don't subscribe to any topic
     set_consumer_config()
     global consumer
+    global thread
+    global thread_stop_event
     consumer = Consumer(config)
     # Get the topics name from the map
     topics = consumer.list_topics()
@@ -80,7 +86,10 @@ def connect(auth):
     emit('units', {'data': json_str})
 
     # Start background task for gps data
-    socketio.start_background_task(target=send_coordinate_data)
+    with thread_lock:
+        if thread is None:
+            thread_stop_event.set()
+            socketio.start_background_task(target=send_coordinate_data, thread_stop_event)
 
 
 @socketio.on('subscribe')
@@ -130,5 +139,12 @@ def subscribe(_json):
 @socketio.on('disconnect')
 def disconnect():
     global consumer
+    global thread
+    global thread_stop_event
+    thread_stop_event.clear()
+    with thread_lock:
+        if thread is not None:
+            thread.join()
+            thread = None
     # Close connection to kafka
     consumer.close()
