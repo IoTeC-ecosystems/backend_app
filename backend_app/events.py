@@ -89,7 +89,7 @@ def connect(auth):
     with thread_lock:
         if thread is None:
             thread_stop_event.set()
-            socketio.start_background_task(target=send_coordinate_data, thread_stop_event)
+            thread = socketio.start_background_task(send_coordinate_data, thread_stop_event)
 
 
 @socketio.on('subscribe')
