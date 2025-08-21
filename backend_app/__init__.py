@@ -1,8 +1,10 @@
 import os
 from flask import Flask
 from flask_socketio import SocketIO
+from flask_cors import CORS
 
-socketio = SocketIO()
+_CORS = CORS(resources={r"/*": {"origins": "http://localhost:8000/"}}, methods=["GET", "POST"])#resources={r"/*": {"origins": r"^http://localhost:8000.*"}})
+socketio = SocketIO(cors_allowed_origins="*")
 
 from . import events
 
