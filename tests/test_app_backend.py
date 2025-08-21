@@ -2,6 +2,7 @@ import uuid
 import random
 import time
 import json
+from datetime import datetime
 
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
@@ -35,7 +36,7 @@ def create_topics_produce_data():
         data = []
         for _ in range(10):
             data.append(GPSData(unit, random.random(), random.random(),
-                                random.random(), random.random(), '05082025 17:30'))
+                                random.random(), random.random(), datetime.now().timestamp()))
         for d in data:
             producer.produce(topic=unit, key=str(time.time()),
                              value=json_serializer(d, SerializationContext(unit, MessageField.VALUE)))

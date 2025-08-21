@@ -27,7 +27,7 @@ gps_data_schema_str = """{
         },
         "datetime": {
             "description": "Datetime from GPS module",
-            "type": "string"
+            "type": "number"
         }
     }
 }
