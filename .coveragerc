@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = 
+    backend_app
+omit = 
+    */tests/*
