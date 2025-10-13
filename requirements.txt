@@ -1,5 +1,9 @@
+flask
+flask_socketio
 confluent-kafka
 python-schema-registry
 cachetools
 authlib
-pytest
+pymongo
+pandas
+numpy
