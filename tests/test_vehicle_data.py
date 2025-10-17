@@ -23,7 +23,7 @@ def test_get_fields():
 
 def test_compute_distance_traveled():
     visualizer = VehicleDataVisualizer()
-    distance = visualizer.compute_daily_distance_traveled()
+    distance = visualizer.compute_distance_traveled()
     assert not distance.empty
     assert 'distance_km' in distance.columns
     assert all(distance['distance_km'] >= 0)
@@ -42,7 +42,7 @@ def test_compute_distance_traveled_empty(monkeypatch):
     monkeypatch.setattr(FleetDatabase, "__init__", empty_init)
 
     visualizer = VehicleDataVisualizer()
-    distance = visualizer.compute_daily_distance_traveled()
+    distance = visualizer.compute_distance_traveled()
     assert distance.empty
 
 
@@ -65,7 +65,7 @@ def test_compute_distance_traveled_single_point(monkeypatch):
     monkeypatch.setattr(FleetDatabase, "__init__", single_point_init)
 
     visualizer = VehicleDataVisualizer()
-    distance = visualizer.compute_daily_distance_traveled()
+    distance = visualizer.compute_distance_traveled()
     assert len(distance) == 1
     assert distance.iloc[0]['distance_km'] == 0.0
 
@@ -95,7 +95,7 @@ def test_compute_distance_traveled_no_movement(monkeypatch):
     monkeypatch.setattr(FleetDatabase, "__init__", no_movement_init)
 
     visualizer = VehicleDataVisualizer()
-    distance = visualizer.compute_daily_distance_traveled()
+    distance = visualizer.compute_distance_traveled()
     assert len(distance) == 1
     assert distance.iloc[0]['distance_km'] == 0.0
 
@@ -124,7 +124,78 @@ def test_compute_distance_traveled_exception_branch(monkeypatch):
     monkeypatch.setattr(FleetDatabase, "__init__", exception_init)
 
     visualizer = VehicleDataVisualizer()
-    distance = visualizer.compute_daily_distance_traveled()
+    distance = visualizer.compute_distance_traveled()
     assert len(distance) == 1
     assert not np.isnan(distance.iloc[0]['distance_km'])
     assert distance.iloc[0]['distance_km'] == 0.0
+
+
+def test_compute_daily_average():
+    visualizer = VehicleDataVisualizer()
+    avgs = visualizer.compute_daily_average()
+
+    assert not avgs.empty
+    assert 'avg_speed' in avgs.columns
+    assert all(avgs['avg_speed'] >= 0)
+    assert 'distance_km' in avgs.columns
+    assert all(avgs['distance_km'] >= 0)
+
+
+def test_compute_daily_average_empty(monkeypatch):
+    empty_client = DummyClient([])
+
+    def empty_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
+        self.client = empty_client
+        self.db = self.client[db_name]
+        self.vehicles = self.db.fleet_vehicle_data
+
+    monkeypatch.setattr(FleetDatabase, "__init__", empty_init)
+
+    visualizer = VehicleDataVisualizer()
+    avgs = visualizer.compute_daily_average()
+    assert avgs.empty
+
+
+def test_compute_daily_average_merge_branch(monkeypatch):
+    data = [
+        {
+            "unit-id": "vehicle_1",
+            "timestamp": "2023-10-01T08:00:00Z",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "speed": 10,
+        },
+        {
+            "unit-id": "vehicle_1",
+            "timestamp": "2023-10-01T08:00:00Z",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "speed": 20,
+        },
+        {
+            "unit-id": "vehicle_1",
+            "timestamp": "2023-11-01T08:00:00Z",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "speed": 30,
+        },
+        {
+            "unit-id": "vehicle_1",
+            "timestamp": "2023-11-01T08:00:00Z",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "speed": 40,
+        },
+    ]
+    merge_client = DummyClient(data)
+
+    def merge_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
+        self.client = merge_client
+        self.db = self.client[db_name]
+        self.vehicles = self.db.fleet_vehicle_data
+
+    monkeypatch.setattr(FleetDatabase, "__init__", merge_init)
+    visualizer = VehicleDataVisualizer()
+    avgs = visualizer.compute_daily_average()
+    assert len(avgs) == 2
+    assert set(avgs.columns) == {'unit-id', 'date', 'avg_speed', 'distance_km'}

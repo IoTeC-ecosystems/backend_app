@@ -16,4 +16,3 @@ def test_geodesic_km():
     assert 110 < d < 112
     assert math.isclose(geodesic_km((0, 0), (0, 1)), 111.32, rel_tol=1e-2)
 
-

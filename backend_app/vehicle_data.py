@@ -40,7 +40,7 @@ class VehicleDataVisualizer:
         """ Get available fields"""
         return self.field_labels
 
-    def compute_daily_distance_traveled(self):
+    def compute_distance_traveled(self):
         """Computes the daily distance traveled for each vehicle."""
         vehicles = self.db.get_all_vehicles()
         vehicles = self.db.get_vehicle_data(vehicles)
@@ -79,3 +79,27 @@ class VehicleDataVisualizer:
                 })
 
         return pd.DataFrame(daily_distances)
+
+    def compute_daily_average(self):
+        """Computes average speed and distance traveled per day for each vehicle."""
+        vehicles = self.db.get_all_vehicles()
+        vehicles = self.db.get_vehicle_data(vehicles)
+
+        if vehicles.empty:
+            return pd.DataFrame()
+
+        # Compute daily distances
+        distance = self.compute_distance_traveled()
+
+        # Compute daily average speeds
+        vehicles['date'] = vehicles['timestamp'].dt.date
+        speed_avg = vehicles.groupby(['unit-id', 'date'])['speed'].mean().reset_index()
+        speed_avg.columns = ['unit-id', 'date', 'avg_speed']
+        if not distance.empty:
+            result = pd.merge(speed_avg, distance, on=['unit-id', 'date'], how='outer')
+            result['distance_km'] = result['distance_km'].fillna(0.0)
+        else:
+            result = speed_avg
+            result['avg_speed'] = result['avg_speed'].fillna(0.0)
+
+        return result

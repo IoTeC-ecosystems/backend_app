@@ -7,3 +7,5 @@ authlib
 pymongo
 pandas
 numpy
+matplotlib
+seaborn
