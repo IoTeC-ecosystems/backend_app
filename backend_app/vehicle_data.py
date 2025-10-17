@@ -15,7 +15,7 @@ sns.set_palette('husl')
 
 class VehicleDataVisualizer:
     def __init__(self, uri : str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
-        self.db = FleetDatabase(uri, db_name)
+        self._db = FleetDatabase(uri, db_name)
 
         self.numeric_fields = [
             'engine-speed', 'vehicle-speed', 'intake-manifold-absolute-pressure',
@@ -36,14 +36,19 @@ class VehicleDataVisualizer:
             'actual-engine-torque': 'Actual Engine Torque(%)'
         }
 
+    @property
+    def db(self) -> FleetDatabase:
+        """ Get database instance """
+        return self._db
+
     def get_fields(self) -> Dict[str, str]:
         """ Get available fields"""
         return self.field_labels
 
     def compute_distance_traveled(self):
         """Computes the daily distance traveled for each vehicle."""
-        vehicles = self.db.get_all_vehicles()
-        vehicles = self.db.get_vehicle_data(vehicles)
+        vehicles = self._db.get_all_vehicles()
+        vehicles = self._db.get_vehicle_data(vehicles)
 
         if vehicles.empty:
             return pd.DataFrame()
@@ -82,8 +87,8 @@ class VehicleDataVisualizer:
 
     def compute_daily_average(self):
         """Computes average speed and distance traveled per day for each vehicle."""
-        vehicles = self.db.get_all_vehicles()
-        vehicles = self.db.get_vehicle_data(vehicles)
+        vehicles = self._db.get_all_vehicles()
+        vehicles = self._db.get_vehicle_data(vehicles)
 
         if vehicles.empty:
             return pd.DataFrame()
