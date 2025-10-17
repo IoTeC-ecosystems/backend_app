@@ -138,6 +138,29 @@ class VehicleDataVisualizer:
         plt.tight_layout()
         return self._fig_to_base64(fig)
 
+    def create_distribution_plot(self, units_id: List[str], field: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates hisotgram/distribution plot for the specified field and vehicles."""
+        vehicles_data = self._db.get_vehicle_data(units_id, start_date, end_date, field == 'distance-traveled')
+        if vehicles_data.empty or field not in vehicles_data.columns:
+            return ""
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        for unit_id in units_id:
+            data = vehicles_data[vehicles_data['unit-id'] == unit_id]
+            if len(data) == 0:
+                continue
+            ax.hist(data[field], bins=30, alpha=0.5, label=f'Unit {unit_id}')
+        
+        ax.set_title(f"{self.field_labels[field]} Distribution", fontsize=14, fontweight='bold')
+        ax.set_xlabel(self.field_labels[field], fontsize=12)
+        ax.set_ylabel("Frequency", fontsize=12)
+        ax.legend()
+        ax.grid(True, alpha=0.6)
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
     def _fig_to_base64(self, fig) -> bytes:
         """Convert a Matplotlib figure to base64-encoded PNG bytes."""
         image_buffer = io.BytesIO()
