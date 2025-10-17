@@ -44,3 +44,23 @@ def geodesic_km(point_a: Tuple[float, float], point_b: Tuple[float, float]) -> f
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return _EARTH_RADIUS_KM * c
+
+
+def get_color_palette(n_colors: int) -> list:
+    """Generate a color palette """
+    colors = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+    ]
+    if n_colors <= len(colors):
+        return colors[:n_colors]
+    # Generate additional colors if needed
+    import colorsys
+    additional_colors = []
+    for i in range(n_colors - len(colors)):
+        hue = i / (n_colors - len(colors))
+        rgb = colorsys.hsv_to_rgb(hue, 0.7, 0.9)
+        hex_color = '#{:02x}{:02x}{:02x}'.format(int(rgb[0]*255), int(rgb[1]*255), int(rgb[2]*255))
+        additional_colors.append(hex_color)
+
+    return colors + additional_colors
