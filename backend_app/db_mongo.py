@@ -9,12 +9,13 @@ class FleetDatabase:
         self.client = MongoClient(uri)
         self.db = self.client[db_name]
         self.vehicles = self.db['vehicles']
+        self.vehicles_variables = self.db['vehicles_variables']
 
     def get_all_vehicles(self) -> List[str]:
         """Return all the vehicles IDs from the database."""
         return self.vehicles.distinct("unit-id")
 
-    def get_vehicle_data(self, units_ids: List[str], start_time: Optional[datetime] = None, end_time: Optional[datetime] = None) -> pd.DataFrame:
+    def get_vehicle_data(self, units_ids: List[str], start_time: Optional[datetime] = None, end_time: Optional[datetime] = None, is_distance: bool = False) -> pd.DataFrame:
         """Retrieve data for the specified vehicles within the given time range."""
         query = {"unit-id": {"$in": units_ids}}
 
@@ -25,7 +26,10 @@ class FleetDatabase:
         elif end_time:
             query["timestamp"] = {"$lte": end_time}
         
-        vehicles_data = self.vehicles.find(query)
+        if is_distance:
+            vehicles_data = self.vehicles.find(query)
+        else:
+            vehicles_data = self.vehicles_variables.find(query)
         data = list(vehicles_data)
 
         if not data:

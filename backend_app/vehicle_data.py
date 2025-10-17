@@ -1,11 +1,14 @@
 import matplotlib
 matplotlib.use('Agg')  # Use a non-interactive backend for matplotlib
 import matplotlib.pyplot as plt
+import io
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import base64
+from datetime import datetime
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from .db_mongo import FleetDatabase
 from .utils import geodesic_km
@@ -21,7 +24,8 @@ class VehicleDataVisualizer:
             'engine-speed', 'vehicle-speed', 'intake-manifold-absolute-pressure',
             'relative-throttle-position', 'commanded-throttle-actuator',
             'engine-coolant-temperature', 'accelerator-pedal-position',
-            'drivers-demanded-torque', 'actual-engine-torque'
+            'drivers-demanded-torque', 'actual-engine-torque',
+            'distance-traveled'
         ]
         
         self.field_labels = {
@@ -33,7 +37,8 @@ class VehicleDataVisualizer:
             'engine-coolant-temperature': 'Engine Coolant Temperature (%)',
             'accelerator-pedal-position': 'Accelerator Pedal Position (%)',
             'drivers-demanded-torque': 'Driver\'s Demanded Torque (%)',
-            'actual-engine-torque': 'Actual Engine Torque(%)'
+            'actual-engine-torque': 'Actual Engine Torque(%)',
+            'distance-traveled': 'Distance Traveled (km)'
         }
 
     @property
@@ -45,10 +50,10 @@ class VehicleDataVisualizer:
         """ Get available fields"""
         return self.field_labels
 
-    def compute_distance_traveled(self):
+    def compute_distance_traveled(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None):
         """Computes the daily distance traveled for each vehicle."""
         vehicles = self._db.get_all_vehicles()
-        vehicles = self._db.get_vehicle_data(vehicles)
+        vehicles = self._db.get_vehicle_data(vehicles, start_date, end_date, True)
 
         if vehicles.empty:
             return pd.DataFrame()
@@ -85,16 +90,16 @@ class VehicleDataVisualizer:
 
         return pd.DataFrame(daily_distances)
 
-    def compute_daily_average(self):
+    def compute_daily_average(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None):
         """Computes average speed and distance traveled per day for each vehicle."""
         vehicles = self._db.get_all_vehicles()
-        vehicles = self._db.get_vehicle_data(vehicles)
+        vehicles = self._db.get_vehicle_data(vehicles, start_date, end_date, True)
 
         if vehicles.empty:
             return pd.DataFrame()
 
         # Compute daily distances
-        distance = self.compute_distance_traveled()
+        distance = self.compute_distance_traveled(start_date, end_date)
 
         # Compute daily average speeds
         vehicles['date'] = vehicles['timestamp'].dt.date

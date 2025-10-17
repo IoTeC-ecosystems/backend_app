@@ -32,12 +32,13 @@ def test_compute_distance_traveled():
 
 
 def test_compute_distance_traveled_empty(monkeypatch):
-    empty_client = DummyClient([])
+    empty_client = DummyClient([], [])
 
     def empty_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = empty_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
 
     monkeypatch.setattr(FleetDatabase, "__init__", empty_init)
 
@@ -55,12 +56,13 @@ def test_compute_distance_traveled_single_point(monkeypatch):
             "longitude": -122.4194,
         }
     ]
-    single_point_client = DummyClient(single_point_data)
+    single_point_client = DummyClient(single_point_data, [])
 
     def single_point_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = single_point_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
 
     monkeypatch.setattr(FleetDatabase, "__init__", single_point_init)
 
@@ -85,12 +87,13 @@ def test_compute_distance_traveled_no_movement(monkeypatch):
             "longitude": -122.4194,
         },
     ]
-    no_movement_client = DummyClient(no_movement_data)
+    no_movement_client = DummyClient(no_movement_data, [])
 
     def no_movement_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = no_movement_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
 
     monkeypatch.setattr(FleetDatabase, "__init__", no_movement_init)
 
@@ -115,11 +118,12 @@ def test_compute_distance_traveled_exception_branch(monkeypatch):
             "longitude": -122.4194,
         },
     ]
-    exception_client = DummyClient(exception_data)
+    exception_client = DummyClient(exception_data, [])
     def exception_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = exception_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
     
     monkeypatch.setattr(FleetDatabase, "__init__", exception_init)
 
@@ -142,12 +146,13 @@ def test_compute_daily_average():
 
 
 def test_compute_daily_average_empty(monkeypatch):
-    empty_client = DummyClient([])
+    empty_client = DummyClient([], [])
 
     def empty_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = empty_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
 
     monkeypatch.setattr(FleetDatabase, "__init__", empty_init)
 
@@ -187,12 +192,13 @@ def test_compute_daily_average_merge_branch(monkeypatch):
             "speed": 40,
         },
     ]
-    merge_client = DummyClient(data)
+    merge_client = DummyClient(data, [])
 
     def merge_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = merge_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = []
 
     monkeypatch.setattr(FleetDatabase, "__init__", merge_init)
     visualizer = VehicleDataVisualizer()

@@ -1,9 +1,14 @@
 import os
 from datetime import datetime, timedelta
+import random
+from faker import Faker
 
 import pytest
 from backend_app import create_app, socketio
 from backend_app.db_mongo import FleetDatabase
+
+# Initialize Faker for generating random data
+faker = Faker()
 
 class DummyCollection:
     def __init__(self, documents):
@@ -35,13 +40,14 @@ class DummyCollection:
 
 
 class DummyDB:
-    def __init__(self, documents):
-        self.fleet_vehicle_data = DummyCollection(documents)
+    def __init__(self, vehicle_document, var_document):
+        self.fleet_vehicle_data = DummyCollection(vehicle_document)
+        self.vehicles_variables = DummyCollection(var_document)
 
 
 class DummyClient:
-    def __init__(self, documents):
-        self.db = DummyDB(documents)
+    def __init__(self, vehicle_document, var_document):
+        self.db = DummyDB(vehicle_document, var_document)
     
     def __getitem__(self, name):
         return self.db
@@ -80,12 +86,30 @@ def mock_db(monkeypatch):
                 'speed': 50 + i*5,
                 'timestamp': basetime + timedelta(minutes=i*30)
             })
-    dummy_client = DummyClient(documents)
+    vehicle_variables = []
+    for vid in ["V1", "V2"]:
+        for i in range(10):
+            data = {
+                "unit-id": vid,
+                "engine-speed": round(random.uniform(800, 6000), 2),
+                "vehicle-speed": round(random.uniform(0, 200), 2),
+                "intake-manifold-absolute-pressure": round(random.uniform(30, 250), 2),
+                "relative-throttle-position": round(random.uniform(0, 100), 2),
+                "commanded-throttle-actuator": round(random.uniform(0, 100), 2),
+                "engine-coolant-temperature": round(random.uniform(80, 110), 2),
+                "accelerator-pedal-position": round(random.uniform(0, 100), 2),
+                "drivers-demanded-torque": round(random.uniform(0, 100), 2),
+                "actual-engine-torque": round(random.uniform(0, 100), 2),
+                "timestamp": basetime + timedelta(minutes=i*30)
+            }
+            vehicle_variables.append(data)
+    dummy_client = DummyClient(documents, vehicle_variables)
 
     def dummy_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = dummy_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = self.db.vehicles_variables
     
     monkeypatch.setattr(FleetDatabase, "__init__", dummy_init)
     yield
