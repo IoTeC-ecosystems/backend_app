@@ -1,5 +1,6 @@
 from datetime import datetime
 import numpy as np
+import base64
 
 from backend_app.vehicle_data import VehicleDataVisualizer
 from backend_app.db_mongo import FleetDatabase
@@ -205,3 +206,56 @@ def test_compute_daily_average_merge_branch(monkeypatch):
     avgs = visualizer.compute_daily_average()
     assert len(avgs) == 2
     assert set(avgs.columns) == {'unit-id', 'date', 'avg_speed', 'distance_km'}
+
+
+def test_create_time_series_plot_empty():
+    # It can be emtpy either due to invalid vehicle ids, no valid field, or date out of range
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_time_series_plot(['V3'], 'engine-speed')
+    assert fig is ""
+
+    fig = visualizer.create_time_series_plot(['V1'], 'invalid-field')
+    assert fig is ""
+
+    fig = visualizer.create_time_series_plot(['V1'], 'engine-speed', start_date=datetime(2100, 1, 1), end_date=datetime(2100, 1, 2))
+    assert fig is ""
+
+
+def test_create_time_series_plot_valid():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_time_series_plot(['V1'], 'engine-speed')
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
+
+
+def test_create_time_series_plot_with_unit_non_existing():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_time_series_plot(['V1', 'V3'], 'engine-speed')
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
+
+def test_create_time_series_plot_with_date_range():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_time_series_plot(
+        ['V1'], 
+        'engine-speed', 
+        start_date=datetime(2023, 1, 1, 1, 0), 
+        end_date=datetime(2023, 1, 1, 4, 0)
+    )
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success

@@ -113,3 +113,37 @@ class VehicleDataVisualizer:
             result['avg_speed'] = result['avg_speed'].fillna(0.0)
 
         return result
+
+
+    def create_time_series_plot(self, units_id: List[str], field: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates a time series plot for the specified field and vehicles."""
+        vehicles_data = self._db.get_vehicle_data(units_id, start_date, end_date, field == 'distance-traveled')
+
+        if vehicles_data.empty or field not in vehicles_data.columns:
+            return ""
+    
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for unit_id in units_id:
+            data = vehicles_data[vehicles_data['unit-id'] == unit_id]
+            if len(data) == 0:
+                continue
+            ax.plot(data['timestamp'], data[field], label=f'Unit {unit_id}', linewidth=2)
+        
+        ax.set_title(f"{self.field_labels.get(field, field)} Over Time", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Time", fontsize=12)
+        ax.set_ylabel(self.field_labels[field], fontsize=12)
+        ax.legend()
+        ax.grid(True, alpha=0.6)
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
+    def _fig_to_base64(self, fig) -> bytes:
+        """Convert a Matplotlib figure to base64-encoded PNG bytes."""
+        image_buffer = io.BytesIO()
+        fig.savefig(image_buffer, format='png', bbox_inches='tight')
+        image_buffer.seek(0)
+        img_str = base64.b64encode(image_buffer.getvalue()).decode()
+        plt.close(fig)
+
+        return img_str
