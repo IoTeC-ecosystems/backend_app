@@ -56,8 +56,9 @@ def app():
         'TESTING': True,
     })
 
-    with app.app_context():
-        yield app, socketio
+    with app.test_client() as client:
+        yield client, socketio
+
 
 @pytest.fixture
 def socketio_client(app):
