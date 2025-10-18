@@ -1,5 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
+import pandas as pd
+import random
 import base64
 
 from backend_app.vehicle_data import VehicleDataVisualizer
@@ -313,3 +315,94 @@ def test_create_distribution_plot_with_date_range():
     except Exception:
         decoded_success = False
     assert decoded_success
+
+
+def test_create_box_plot_empty():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['V3'], 'engine-speed')
+    assert fig is ""
+
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['V1'], 'invalid-field')
+    assert fig is ""
+
+    fig = visualizer.create_box_plot(['V1'], 'vehicle-speed', start_date=datetime(2100, 1, 1), end_date=datetime(2100, 1, 2))
+    assert fig is ""
+
+
+def test_create_box_plot_valid():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['V1'], 'engine-speed')
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
+
+def test_create_box_plot_with_unit_non_existing():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['V1', 'V3'], 'engine-speed')
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
+
+
+def test_create_box_plot_with_date_range():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(
+        ['V1'],
+        'engine-speed',
+        start_date=datetime(2023, 1, 1, 1, 0),
+        end_date=datetime(2023, 1, 1, 4, 0)
+    )
+    assert fig is not ""
+    try:
+        base64.b64decode(fig)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
+
+
+def test_create_box_plot_valid_field_invalid_vehicle():
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['INVALID_VEHICLE'], 'engine-speed')
+    assert fig is ""
+
+
+def test_create_box_plot_nan_values(monkeypatch):
+    vehicle_variables = []
+    basetime = datetime(2023, 1, 1, 0, 0)
+    for vid in ["V1", "V2"]:
+        for i in range(10):
+            data = {
+                "unit-id": vid,
+                "engine-speed": pd.NA,
+                "vehicle-speed": round(random.uniform(0, 200), 2),
+                "intake-manifold-absolute-pressure": round(random.uniform(30, 250), 2),
+                "relative-throttle-position": round(random.uniform(0, 100), 2),
+                "commanded-throttle-actuator": round(random.uniform(0, 100), 2),
+                "engine-coolant-temperature": round(random.uniform(80, 110), 2),
+                "accelerator-pedal-position": round(random.uniform(0, 100), 2),
+                "drivers-demanded-torque": round(random.uniform(0, 100), 2),
+                "actual-engine-torque": round(random.uniform(0, 100), 2),
+                "timestamp": basetime + timedelta(minutes=i*30)
+            }
+            vehicle_variables.append(data)
+    dummy_client = DummyClient([], vehicle_variables)
+    def nan_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
+        self.client = dummy_client
+        self.db = self.client[db_name]
+        self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = self.db.vehicles_variables
+
+    monkeypatch.setattr(FleetDatabase, "__init__", nan_init)
+    visualizer = VehicleDataVisualizer()
+    fig = visualizer.create_box_plot(['V1', 'V2'], 'engine-speed')
+    assert fig is ""
