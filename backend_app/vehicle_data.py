@@ -218,6 +218,44 @@ class VehicleDataVisualizer:
         plt.tight_layout()
         return self._fig_to_base64(fig)
 
+    def create_correlation_heatmap(self, unit_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates a correlation heatmap for numeric fields of the specified vehicles."""
+        vehicles_data = self._db.get_vehicle_data([unit_id], start_date, end_date, False)
+
+        if vehicles_data.empty:
+            return ""
+
+        # Do not create if NA values are present
+        try:
+            # All fields but 'distance-traveled'
+            corr_matrix = vehicles_data[self.numeric_fields[:-1]].corr()
+        except TypeError:
+            return ""
+
+        fig, ax = plt.subplots(figsize=(12, 10))
+        # Create heatmap
+        im = ax.imshow(corr_matrix, cmap='coolwarm', aspect='auto', vmin=-1, vmax=1)
+        # Set ticks and labels
+        ax.set_xticks(range(len(corr_matrix.columns)))
+        ax.set_yticks(range(len(corr_matrix.columns)))
+        ax.set_xticklabels([self.field_labels[col] for col in corr_matrix.columns], rotation=45, ha='right')
+        ax.set_yticklabels([self.field_labels[col] for col in corr_matrix.columns])
+
+        # Add correlation values
+        for i in range(len(corr_matrix.columns)):
+            for j in range(len(corr_matrix.columns)):
+                text = ax.text(j, i, f'{corr_matrix.iloc[i, j]:.2f}', ha="center", va="center", color="black", fontweight='bold')
+
+        title = f'Engine Parameters Correlation Matrix'
+        title += f' - Vehicle {unit_id}'
+        ax.set_title(title, fontsize=14, fontweight='bold')
+
+        # Add colorbar
+        cbar = plt.colorbar(im)
+        cbar.set_label('Correlation Coefficient', rotation=270, labelpad=15)
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
     def _fig_to_base64(self, fig) -> bytes:
         """Convert a Matplotlib figure to base64-encoded PNG bytes."""
         image_buffer = io.BytesIO()
