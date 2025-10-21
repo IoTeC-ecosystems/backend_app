@@ -191,6 +191,32 @@ class VehicleDataVisualizer:
 
         plt.tight_layout()
         return self._fig_to_base64(fig)
+    
+    def create_scatter_plot(self, units_id: List[str], field_x: str, field_y: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates scatter plot for the specified fields and vehicles."""
+        vehicles_data = self._db.get_vehicle_data(units_id, start_date, end_date, False)
+
+        if vehicles_data.empty or field_x not in vehicles_data.columns or field_y not in vehicles_data.columns:
+            return ""
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        colors = plt.cm.Set3(np.linspace(0, 1, len(units_id)))
+
+        for i, unit_id in enumerate(units_id):
+            data = vehicles_data[vehicles_data['unit-id'] == unit_id]
+            try:
+                ax.scatter(data[field_x], data[field_y], alpha=0.6, label=f'Unit {unit_id}', color=colors[i])
+            except TypeError:
+                return ""
+        
+        ax.set_title(f"{self.field_labels.get(field_x, field_x)} vs {self.field_labels.get(field_y, field_y)}", fontsize=14, fontweight='bold')
+        ax.set_xlabel(self.field_labels.get(field_x, field_x), fontsize=12)
+        ax.set_ylabel(self.field_labels.get(field_y, field_y), fontsize=12)
+        ax.legend()
+        ax.grid(True, alpha=0.6)
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
 
     def _fig_to_base64(self, fig) -> bytes:
         """Convert a Matplotlib figure to base64-encoded PNG bytes."""
