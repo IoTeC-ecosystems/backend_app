@@ -10,6 +10,7 @@ from . import events
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    app.secret_key = os.urandom(24)
 
     if test_config is None:
         app.config.from_pyfile('instance_config.py', silent=True)
