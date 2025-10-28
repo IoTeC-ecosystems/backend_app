@@ -114,8 +114,6 @@ def test_socketio_events(socketio_client):
     assert 'code' in data
     assert 'subscribed' in data
 
-    time.sleep(15)
-
     resp = socketio_client.get_received()
     for data in resp:
         assert 'gps data' == data['name']
@@ -124,5 +122,7 @@ def test_socketio_events(socketio_client):
         json_obj = json.loads(data['args'][0])
         unit = json_obj['units'][0]['uuid']
         assert unit in units_list
+
+    socketio_client.disconnect()
 
     #delete_test_topics()

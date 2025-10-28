@@ -1,6 +1,7 @@
 import json
-import uuid
 from threading import Event, Lock
+
+from typing import Dict
 
 # Flask
 from flask import session
@@ -25,22 +26,29 @@ thread_lock = Lock()
 
 def set_consumer_config():
     config['group.id'] = 'gps_group'
-    config['auto.offset.reset'] = 'earliest'
+    config['auto.offset.reset'] = 'latest'
 
 
-def send_coordinate_data(event):
+def send_coordinate_data(event: Event) -> None:
     """
     Will continously send data to the client in the background
+
+    :param event: threading event to stop the thread
     """
     global consumer
     json_deserializer = JSONDeserializer(gps_data_schema_str, from_dict=dict_to_gpsdata)
 
+    topics_data = dict()
+    topics_set = set()
     # Getting data from kafka
     while event.is_set():
         # Number of topics might change with time
         topics = consumer.list_topics()
-        topics_list = [topic for topic in topics.topics.keys() if is_valid_uuid(topic)]
-        num_topics = len(topics_list)
+        for topic in topics.topics.keys():
+            if topic not in topics_set and is_valid_uuid(topic):
+                topics_set.add(topic)
+                topics_data[topic] = None
+        num_topics = len(topics_set)
         try:
             # Try to get one message per topic
             events = consumer.consume(num_messages=num_topics, timeout=1)
@@ -49,6 +57,12 @@ def send_coordinate_data(event):
             messages_list = []
             for evt in events:
                 data = json_deserializer(evt.value(), SerializationContext(evt.topic(), MessageField.VALUE))
+                if data is not None:
+                    # Store the latest message per topic
+                    topics_data[evt.topic()] = data
+            # Prepare the data to be sent to client
+            for topic in topics_set:
+                data = topics_data[topic]
                 if data is not None:
                     messages_list.append(gpsdata_to_dict(data, None))
             data = {
