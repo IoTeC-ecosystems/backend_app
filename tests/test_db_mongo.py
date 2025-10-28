@@ -12,15 +12,17 @@ def test_db_connection():
     assert db_instance.client is not None
     assert db_instance.db is not None
     assert db_instance.vehicles is not None
+    assert db_instance.vehicles_variables is not None
 
 
 def test_empty_db(monkeypatch):
-    empty_client = DummyClient([])
+    empty_client = DummyClient([], [])
 
     def empty_init(self, connection_str: str = "mongodb://localhost:27017", db_name: str = "fleet_db"):
         self.client = empty_client
         self.db = self.client[db_name]
         self.vehicles = self.db.fleet_vehicle_data
+        self.vehicles_variables = self.db.vehicles_variables
 
     monkeypatch.setattr(FleetDatabase, "__init__", empty_init)
     db_instance = FleetDatabase()
