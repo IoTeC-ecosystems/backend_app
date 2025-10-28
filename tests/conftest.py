@@ -67,8 +67,18 @@ def app():
 
 
 @pytest.fixture
-def socketio_client(app):
-    app, socketio = app
+def flask_app():
+    app = create_app({
+        'TESTING': True,
+    })
+
+    with app.app_context():
+        yield app, socketio
+
+
+@pytest.fixture
+def socketio_client(flask_app):
+    app, socketio = flask_app
     client = socketio.test_client(app)
     return client
 
