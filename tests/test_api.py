@@ -185,3 +185,49 @@ def test_daily_distance_multiple_vehicles(app):
     data = response.get_json()
     assert data["status"] == 200
     assert "data" in data
+
+
+def test_average_speed_distance_empty(app):
+    client = app[0]
+    response = client.post("/api/average-speed-distance", json={"unit_id": "V3"})
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data["status"] == 400
+    assert "data" in data
+    assert data["data"] == "No data available for the selected parameters."
+
+
+def test_average_speed_distance_data(app):
+    client = app[0]
+    response = client.post('/api/average-speed-distance', json={"unit_id": "V1"})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)
+
+
+def test_average_speed_distance_with_time_start(app):
+    client = app[0]
+    response = client.post('/api/average-speed-distance', json={
+        "unit_id": "V1",
+        "start_time": "2023-01-01T00:15:00",
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)
+
+
+def test_average_speed_distance_with_time_end(app):
+    client = app[0]
+    response = client.post('/api/average-speed-distance', json={
+        "unit_id": "V1",
+        "end_time": "2023-01-01T00:45:00",
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)

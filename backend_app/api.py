@@ -75,3 +75,28 @@ def daily_distance():
         return jsonify({"status": 400, "data": "No data available for the selected parameters."})
 
     return jsonify({"status": 200, "data": plot})
+
+
+@main.route('/api/average-speed-distance', methods=['POST'])
+def average_speed_distance():
+    data = request.get_json()
+    unit_id = data.get("unit_id", "")
+    try:
+        start_date = datetime.fromisoformat(data.get("start_time"))
+    except TypeError:
+        start_date = None
+    try:
+        end_date = datetime.fromisoformat(data.get("end_time"))
+    except TypeError:
+        end_date = None
+
+    plot = visualizer.plot_daily_average(
+        unit_id=unit_id,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if plot == "":
+        return jsonify({"status": 400, "data": "No data available for the selected parameters."})
+
+    return jsonify({"status": 200, "data": plot})
