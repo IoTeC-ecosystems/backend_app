@@ -114,6 +114,30 @@ class VehicleDataVisualizer:
 
         return result
 
+    def plot_daily_distance(self, units_id: List[str], start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates a plot for daily distance traveled for the specified vehicles."""
+        daily_distance = self.compute_distance_traveled(start_date, end_date)
+        if daily_distance.empty:
+            return ""
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for unit_id in units_id:
+            data = daily_distance[daily_distance['unit-id'] == unit_id]
+            if len(data) == 0:
+                continue
+            ax.plot(data['date'], data['distance_km'], marker='o', label=f'Unit {unit_id}', linewidth=2)
+
+        if len(ax.lines) == 0:
+            return ""
+
+        ax.set_title("Daily Distance Traveled", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Date", fontsize=12)
+        ax.set_ylabel("Distance Traveled (km)", fontsize=12)
+        ax.legend()
+        ax.grid(True, alpha=0.6)
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
 
     def create_time_series_plot(self, units_id: List[str], field: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
         """Creates a time series plot for the specified field and vehicles."""

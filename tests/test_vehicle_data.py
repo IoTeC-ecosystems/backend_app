@@ -555,3 +555,34 @@ def test_create_correlation_heatmap_nan_values(monkeypatch):
     visualizer = VehicleDataVisualizer()
     fig = visualizer.create_correlation_heatmap('V1')
     assert fig is ""
+
+
+def test_plot_daily_distance_empty():
+    visualizer = VehicleDataVisualizer()
+    plot = visualizer.plot_daily_distance(['V3'])
+
+    assert plot is ""
+
+
+def test_plot_daily_distance_out_of_range():
+    visualizer = VehicleDataVisualizer()
+    plot = visualizer.plot_daily_distance(
+        ['V1'],
+        start_date=datetime(2100, 1, 1),
+        end_date=datetime(2100, 1, 2)
+    )
+
+    assert plot is ""
+
+
+def test_plot_daily_distance_valid():
+    visualizer = VehicleDataVisualizer()
+    plot = visualizer.plot_daily_distance(['V1'])
+
+    assert plot is not ""
+    try:
+        base64.b64decode(plot)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
