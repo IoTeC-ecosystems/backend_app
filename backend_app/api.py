@@ -129,3 +129,32 @@ def plot_timeseries():
         return jsonify({"status": 400, "data": "No data available for the selected parameters."})
 
     return jsonify({"status": 200, "data": plot})
+
+
+@main.route("/api/plot/distribution", methods=["POST"])
+def plot_distribution():
+    data = request.get_json()
+    units_id = data.get("units_id", [])
+    field = data.get("field", "")
+    if field == "":
+        return jsonify({"status": 400, "data": "Field parameter is required."})
+    try:
+        start_date = datetime.fromisoformat(data.get("start_time"))
+    except TypeError:
+        start_date = None
+    try:
+        end_date = datetime.fromisoformat(data.get("end_time"))
+    except TypeError:
+        end_date = None
+
+    plot = visualizer.create_distribution_plot(
+        units_id=units_id,
+        field=field,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if plot == "":
+        return jsonify({"status": 400, "data": "No data available for the selected parameters."})
+
+    return jsonify({"status": 200, "data": plot})
