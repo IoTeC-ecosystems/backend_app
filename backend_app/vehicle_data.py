@@ -139,6 +139,35 @@ class VehicleDataVisualizer:
         plt.tight_layout()
         return self._fig_to_base64(fig)
 
+    def plot_daily_average(self, unit_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
+        """Creates a plot for daily average speed and distance traveled for the specified vehicle."""
+        daily_avg = self.compute_daily_average(start_date, end_date)
+        if daily_avg.empty:
+            return ""
+
+        vehicle_data = daily_avg[daily_avg['unit-id'] == unit_id]
+        if vehicle_data.empty:
+            return ""
+
+        fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+        axes[0].hist(vehicle_data['avg_speed'].dropna(), bins=20, color='skyblue', edgecolor='black')
+        axes[0].set_title("Average Speed Distribution", fontsize=12, fontweight='bold')
+        axes[0].set_xlabel("Time", fontsize=10)
+        axes[0].set_ylabel("Average Speed (km/h)", fontsize=10)
+        axes[0].grid(True, alpha=0.6)
+
+        axes[1].hist(vehicle_data['distance_km'].dropna(), bins=20, color='salmon', edgecolor='black')
+        axes[1].set_title("Distance Traveled Distribution", fontsize=12, fontweight='bold')
+        axes[1].set_xlabel("Time", fontsize=10)
+        axes[1].set_ylabel("Distance Traveled (km)", fontsize=10)
+        axes[1].grid(True, alpha=0.6)
+
+        fig.suptitle("Daily Average Speed and Distance Traveled", fontsize=14, fontweight='bold')
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
     def create_time_series_plot(self, units_id: List[str], field: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> str:
         """Creates a time series plot for the specified field and vehicles."""
         vehicles_data = self._db.get_vehicle_data(units_id, start_date, end_date, field == 'distance-traveled')

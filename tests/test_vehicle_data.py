@@ -586,3 +586,26 @@ def test_plot_daily_distance_valid():
     except Exception:
         decoded_success = False
     assert decoded_success
+
+
+def test_plot_daily_average_empty():
+    visualizer = VehicleDataVisualizer()
+    plot = visualizer.plot_daily_average('V3')
+
+    assert plot is ""
+
+    plot = visualizer.plot_daily_average('V1', start_date=datetime(2100, 1, 1), end_date=datetime(2100, 1, 2))
+    assert plot is ""
+
+
+def test_plot_daily_average_valid():
+    visualizer = VehicleDataVisualizer()
+    plot = visualizer.plot_daily_average('V1', start_date=datetime(2023, 1, 1), end_date=datetime(2023, 1, 10))
+
+    assert plot is not ""
+    try:
+        base64.b64decode(plot)
+        decoded_success = True
+    except Exception:
+        decoded_success = False
+    assert decoded_success
