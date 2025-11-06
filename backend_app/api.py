@@ -218,3 +218,31 @@ def plot_scatter():
         return jsonify({"status": 400, "data": "No data available for the selected parameters."})
     
     return jsonify({"status": 200, "data": plot})
+
+
+@main.route("/api/plot/heatmap", methods=["POST"])
+def plot_heatmap():
+    data = request.get_json()
+    unit_id = data.get("unit_id", "")
+
+    if not unit_id:
+        return jsonify({"status": 400, "data": "unit_id parameter is required."})
+    try:
+        start_date = datetime.fromisoformat(data.get("start_time"))
+    except TypeError:
+        start_date = None
+    try:
+        end_date = datetime.fromisoformat(data.get("end_time"))
+    except TypeError:
+        end_date = None
+    
+    plot = visualizer.create_correlation_heatmap(
+        unit_id=unit_id,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if plot == "":
+        return jsonify({"status": 400, "data": "No data available for the selected parameters."})
+
+    return jsonify({"status": 200, "data": plot})
