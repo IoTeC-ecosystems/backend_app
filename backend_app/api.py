@@ -187,3 +187,34 @@ def plot_boxplot():
         return jsonify({"status": 400, "data": "No data available for the selected parameters."})
 
     return jsonify({"status": 200, "data": plot})
+
+
+@main.route("/api/plot/scatter", methods=["POST"])
+def plot_scatter():
+    data = request.get_json()
+    units_id = data.get("units_id", [])
+    field_x = data.get("field_x", "")
+    field_y = data.get("field_y", "")
+    if field_x == "" or field_y == "":
+        return jsonify({"status": 400, "data": "Both field_x and field_y parameters are required."})
+    try:
+        start_date = datetime.fromisoformat(data.get("start_time"))
+    except TypeError:
+        start_date = None
+    try:
+        end_date = datetime.fromisoformat(data.get("end_time"))
+    except TypeError:
+        end_date = None
+    
+    plot = visualizer.create_scatter_plot(
+        units_id=units_id,
+        field_x=field_x,
+        field_y=field_y,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if plot == "":
+        return jsonify({"status": 400, "data": "No data available for the selected parameters."})
+    
+    return jsonify({"status": 200, "data": plot})

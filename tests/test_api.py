@@ -494,3 +494,97 @@ def test_plot_boxplot_with_time_range(app):
     assert data["status"] == 200
     assert "data" in data
     assert isinstance(data["data"], str)
+
+
+def test_plot_scatter_empty(app):
+    client = app[0]
+    response = client.post("/api/plot/scatter", json={
+        "units_id": ["V3"],
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data["status"] == 400
+    assert "data" in data
+    assert data["data"] == "No data available for the selected parameters."
+
+    response = client.post("/api/plot/scatter", json={
+        "units_id": [],
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data["status"] == 400
+    assert "data" in data
+    assert data["data"] == "No data available for the selected parameters." 
+
+    response = client.post("/api/plot/scatter", json={
+        "units_id": ["V1"],
+        "start_time": "2022-12-31T23:00:00",
+        "end_time": "2022-12-31T23:30:00",
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data["status"] == 400
+    assert "data" in data
+    assert data["data"] == "No data available for the selected parameters."
+
+
+def test_plot_scatter_no_fields(app):
+    client = app[0]
+    response = client.post("/api/plot/scatter", json={
+        "units_id": ["V1"]
+    })
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data["status"] == 400
+    assert "data" in data
+    assert data["data"] == "Both field_x and field_y parameters are required."
+
+
+def test_plot_scatter_data(app):
+    client = app[0]
+    response = client.post('/api/plot/scatter', json={
+        "units_id": ["V1"],
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)
+
+
+def test_plot_scatter_multiple_vehicles(app):
+    client = app[0]
+    response = client.post('/api/plot/scatter', json={
+        "units_id": ["V1", "V2"],
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)
+
+
+def test_plot_scatter_with_time_range(app):
+    client = app[0]
+    response = client.post('/api/plot/scatter', json={
+        "units_id": ["V1"],
+        "start_time": "2023-01-01T00:15:00",
+        "end_time": "2023-01-01T00:45:00",
+        "field_x": "engine-speed",
+        "field_y": "vehicle-speed"
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == 200
+    assert "data" in data
+    assert isinstance(data["data"], str)
