@@ -4,6 +4,7 @@ Auxiliary functions for the backend
 from typing import Tuple
 import uuid
 import math
+from datetime import datetime
 
 _EARTH_RADIUS_KM = 6371.0088
 
@@ -64,3 +65,17 @@ def get_color_palette(n_colors: int) -> list:
         additional_colors.append(hex_color)
 
     return colors + additional_colors
+
+
+def extract_fields(data: dict):
+    """ Extract unit_id (or units_id), start_date, end_date from data dict """
+    unit_id = data.get('unit_id') or data.get('units_id')
+    try:
+        start_date = datetime.fromisoformat(data.get("start_time"))
+    except TypeError:
+        start_date = None
+    try:
+        end_date = datetime.fromisoformat(data.get("end_time"))
+    except TypeError:
+        end_date = None
+    return unit_id, start_date, end_date

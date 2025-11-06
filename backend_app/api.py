@@ -4,6 +4,7 @@ from flask import Blueprint, session, jsonify, request
 from flask_cors import CORS
 
 from .vehicle_data import VehicleDataVisualizer
+from .utils import extract_fields
 
 main = Blueprint('main', __name__)
 
@@ -29,15 +30,7 @@ def get_vehicles():
 @main.route("/api/speed-over-time", methods=["POST"])
 def speed_over_time():
     data = request.get_json()
-    units_id = data.get("units_id", [])
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
+    units_id, start_date, end_date = extract_fields(data)
 
     plot = visualizer.create_time_series_plot(
         units_id=units_id,
@@ -55,15 +48,7 @@ def speed_over_time():
 @main.route("/api/daily-distance", methods=["POST"])
 def daily_distance():
     data = request.get_json()
-    units_id = data.get("units_id", [])
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
+    units_id, start_date, end_date = extract_fields(data)
 
     plot = visualizer.plot_daily_distance(
         units_id=units_id,
@@ -80,15 +65,7 @@ def daily_distance():
 @main.route('/api/average-speed-distance', methods=['POST'])
 def average_speed_distance():
     data = request.get_json()
-    unit_id = data.get("unit_id", "")
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
+    unit_id, start_date, end_date = extract_fields(data)
 
     plot = visualizer.plot_daily_average(
         unit_id=unit_id,
@@ -105,18 +82,10 @@ def average_speed_distance():
 @main.route("/api/plot/timeseries", methods=["POST"])
 def plot_timeseries():
     data = request.get_json()
-    units_id = data.get("units_id", [])
+    units_id, start_date, end_date = extract_fields(data)
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
 
     plot = visualizer.create_time_series_plot(
         units_id=units_id,
@@ -134,18 +103,10 @@ def plot_timeseries():
 @main.route("/api/plot/distribution", methods=["POST"])
 def plot_distribution():
     data = request.get_json()
-    units_id = data.get("units_id", [])
+    units_id, start_date, end_date = extract_fields(data)
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
 
     plot = visualizer.create_distribution_plot(
         units_id=units_id,
@@ -163,18 +124,10 @@ def plot_distribution():
 @main.route("/api/plot/boxplot", methods=["POST"])
 def plot_boxplot():
     data = request.get_json()
-    units_id = data.get("units_id", [])
+    units_id, start_date, end_date = extract_fields(data)
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
 
     plot = visualizer.create_box_plot(
         units_id=units_id,
@@ -192,19 +145,11 @@ def plot_boxplot():
 @main.route("/api/plot/scatter", methods=["POST"])
 def plot_scatter():
     data = request.get_json()
-    units_id = data.get("units_id", [])
+    units_id, start_date, end_date = extract_fields(data)
     field_x = data.get("field_x", "")
     field_y = data.get("field_y", "")
     if field_x == "" or field_y == "":
         return jsonify({"status": 400, "data": "Both field_x and field_y parameters are required."})
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
     
     plot = visualizer.create_scatter_plot(
         units_id=units_id,
@@ -223,18 +168,10 @@ def plot_scatter():
 @main.route("/api/plot/heatmap", methods=["POST"])
 def plot_heatmap():
     data = request.get_json()
-    unit_id = data.get("unit_id", "")
+    unit_id, start_date, end_date = extract_fields(data)
 
     if not unit_id:
         return jsonify({"status": 400, "data": "unit_id parameter is required."})
-    try:
-        start_date = datetime.fromisoformat(data.get("start_time"))
-    except TypeError:
-        start_date = None
-    try:
-        end_date = datetime.fromisoformat(data.get("end_time"))
-    except TypeError:
-        end_date = None
     
     plot = visualizer.create_correlation_heatmap(
         unit_id=unit_id,
