@@ -25,7 +25,7 @@ class FleetDatabase:
             query["timestamp"] = {"$gte": start_time}
         elif end_time:
             query["timestamp"] = {"$lte": end_time}
-        
+
         if is_distance:
             vehicles_data = self.vehicles.find(query)
         else:

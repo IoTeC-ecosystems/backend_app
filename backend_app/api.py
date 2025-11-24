@@ -91,6 +91,8 @@ def plot_timeseries():
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
+    if units_id == None:
+        return jsonify({"status": 400, "data": "units_id parameter is required."})
 
     plot = visualizer.create_time_series_plot(
         units_id=units_id,
@@ -112,6 +114,8 @@ def plot_distribution():
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
+    if units_id == None:
+        return jsonify({"status": 400, "data": "units_id parameter is required."})
 
     plot = visualizer.create_distribution_plot(
         units_id=units_id,
@@ -133,6 +137,8 @@ def plot_boxplot():
     field = data.get("field", "")
     if field == "":
         return jsonify({"status": 400, "data": "Field parameter is required."})
+    if units_id == None:
+        return jsonify({"status": 400, "data": "units_id parameter is required."})
 
     plot = visualizer.create_box_plot(
         units_id=units_id,
@@ -155,6 +161,8 @@ def plot_scatter():
     field_y = data.get("field_y", "")
     if field_x == "" or field_y == "":
         return jsonify({"status": 400, "data": "Both field_x and field_y parameters are required."})
+    if units_id == None:
+        return jsonify({"status": 400, "data": "units_id parameter is required."})
     
     plot = visualizer.create_scatter_plot(
         units_id=units_id,
