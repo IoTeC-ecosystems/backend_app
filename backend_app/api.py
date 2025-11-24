@@ -8,7 +8,7 @@ from .utils import extract_fields
 
 main = Blueprint('main', __name__)
 
-CORS(main, resources={r"/*": {"origins": "http://localhost:8000.*"}})
+CORS(main, resources={r"/*": {"origins": "http://localhost:5500.*"}})
 
 visualizer = VehicleDataVisualizer()
 db = visualizer.db
@@ -25,6 +25,11 @@ def get_vehicles():
     vehicles = db.get_all_vehicles()
     return jsonify({"status": 200, "data": vehicles})
 
+
+@main.route("/api/fields", methods=["GET"])
+def get_fields():
+    fields = visualizer.get_fields()
+    return jsonify({"status": 200, "data": fields})
 
 
 @main.route("/api/speed-over-time", methods=["POST"])
